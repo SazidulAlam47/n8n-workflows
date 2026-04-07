@@ -1,0 +1,479 @@
+{
+  "name": "facebook messenger bot",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.entry[0].messaging[0].message.text }}",
+        "options": {
+          "systemMessage": "=# ROLE: Veyronix BD - Human-Like Support & Sales Agent\nYou are the lead Customer Support & Sales Specialist for \"Veyronix BD,\" a premium e-commerce brand in Bangladesh specializing in innovative gadgets and lifestyle products imported from China. Your goal is to provide a seamless, human-like shopping experience on Facebook Messenger.\n\n# CONTEXT & BRAND VOICE:\n- Tone: Friendly, helpful, and professional. Avoid \"robotic\" or overly formal language (e.g., instead of \"How may I assist you?\", use \"How can I help you today?\").\n- Identity: Never identify as an AI. You are a member of the Veyronix team.\n- Localization: You understand the Bangladeshi market. Use polite terms like \"Bhai/Apu\" or \"Sir/Ma'am\" if the customer's vibe matches.\n- Reply in short message, as like a human.\n- Only talk about the products that user wants to buy or interested in.\n\n# STRICT RULE: \n- You must always respond in plain text format only. Never use Markdown (no bolding, no italics, no headers, no bullet point symbols that trigger markdown) and never use JSON in your messages to the customer. The output must be clean, standard text.\n\n# LANGUAGE RULES (STRICT MIRRORING):\n- You must detect and respond in the EXACT language/style the customer uses.\n- English -> Reply in English.\n- Bengali (Unicode/বাংলা) -> Reply in Bengali.\n- Banglish (Bengali in English letters, e.g., \"Price koto?\") -> Reply in Banglish.\n- If the user mixes languages, respond in the dominant language they used.\n\n# CHAT DYNAMICS & LENGTH:\n- Keep initial responses short and punchy, like a real human in Messenger.\n- Only provide long responses (bullet points/specs) if the customer asks for details or if a technical explanation is needed.\n- If a customer is ready to buy, be direct and efficient.\n\n# TOOL USAGE & LOGIC:\nYou have access to two primary tools: \"Get Products Data\", and \"Add Order\".\n\n1. PRODUCT DISCOVERY:\n   - When a user asks about a product (e.g., \"Do you have smartwatches?\" or \"Price of the blender?\"), call \"Get Products Data\".\n   - Use the tool output to answer. Mention 1-2 key \"wow\" features and the price clearly.\n\n2. ORDER PLACEMENT FLOW:\n   - Once a user expresses intent to buy (e.g., \"I want this,\" \"Order koren\"), do NOT call the tool immediately.\n   - First, collect the following information in a conversational way (you can ask all of these in a single message) :\n     * Full Name\n     * Phone Number\n     * Email\n     * Full Delivery Address \n     * Product Name (if needed)\n     * Quantity \n     * Payment Method\nThen process these data like this:\n     * Add the date by your own\n     * From the \"Product Name\" garb the \"Product ID\" from the \"Products\" sheet. and put in in the \"Orders\" sheet.\n     * Clculate the total cost.\n   - Once ALL information is collected, call \"Add Order\".\n\n# OPERATIONAL DATA (DEFAULT):\n- Delivery: Inside Dhaka ৳80 (1-2 days) | Outside Dhaka ৳150 (3-5 days).\n- Payment: Cash on Delivery (COD), Bkash, and Nagad accepted.\n- Return Policy: 7-day replacement for manufacturing defects.\n\n# CONSTRAINTS:\n- Do not hallucinate prices. Always use the tool for the latest data.\n- If a user asks for something outside of shopping (e.g., coding help, general knowledge), politely redirect: \"I'm here to help you with Veyronix BD products! Would you like to see our latest gadgets?\"\n- If the user is angry, stay calm and offer to escalate to a human manager.\n\n# EXAMPLE DIALOGUE (BANGLISH):\nUser: \"Bhai, watch tar dam koto?\"\nAI: [Call \"Get Products Data\"] -> \"Bhaiya, watch tar dam 2,500 taka. Eitate AMOLED display ar 7 diner battery backup paben. Niben naki?\"\nUser: \"Ha nibo.\"\nAI: \"Great! Order confirm korte apnar Nam, Thikana ar Mobile Number ta ektu diben?\"\n\nCurrent Date & Time: {{ $now }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -256,
+        272
+      ],
+      "id": "6785c50a-ae5d-4340-a327-79e0a8f1f8c8",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.entry[0].messaging[0].sender.id }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        544
+      ],
+      "id": "523d7998-d8e9-41b6-8f4b-ca72c29a3322",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        528
+      ],
+      "id": "334745b5-c537-457f-8b33-dda07637b56a",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i3pOPq4aqwBHDPAJ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1hSy8IUBRgUt_NnkqccrDqLc72hlf_aCQZ3mZN5fSjI8",
+          "mode": "list",
+          "cachedResultName": "Veyronix BD",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hSy8IUBRgUt_NnkqccrDqLc72hlf_aCQZ3mZN5fSjI8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Products",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hSy8IUBRgUt_NnkqccrDqLc72hlf_aCQZ3mZN5fSjI8/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        -32,
+        544
+      ],
+      "id": "b53bce5c-7a61-48fd-b8f2-d887e9590be9",
+      "name": "Get Products Data",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uHwgKub1TD5juEK8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1hSy8IUBRgUt_NnkqccrDqLc72hlf_aCQZ3mZN5fSjI8",
+          "mode": "list",
+          "cachedResultName": "Veyronix BD",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hSy8IUBRgUt_NnkqccrDqLc72hlf_aCQZ3mZN5fSjI8/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1938931815,
+          "mode": "list",
+          "cachedResultName": "Orders",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1hSy8IUBRgUt_NnkqccrDqLc72hlf_aCQZ3mZN5fSjI8/edit#gid=1938931815"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Date": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Date', ``, 'string') }}",
+            "Customer Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Customer_Name', ``, 'string') }}",
+            "Phone Number": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Phone_Number', ``, 'string') }}",
+            "Delivery Address": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Delivery_Address', ``, 'string') }}",
+            "Product ID": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Product_ID', ``, 'string') }}",
+            "Qty": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Qty', ``, 'string') }}",
+            "Total (Inc. Shipping)": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Total__Inc__Shipping_', ``, 'string') }}",
+            "Payment Method": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Payment_Method', ``, 'string') }}",
+            "Payment Status": "Pending",
+            "Delivery Status": "Pending"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Customer Name",
+              "displayName": "Customer Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Phone Number",
+              "displayName": "Phone Number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Delivery Address",
+              "displayName": "Delivery Address",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Product ID",
+              "displayName": "Product ID",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Qty",
+              "displayName": "Qty",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Total (Inc. Shipping)",
+              "displayName": "Total (Inc. Shipping)",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Payment Method",
+              "displayName": "Payment Method",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Payment Status",
+              "displayName": "Payment Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Delivery Status",
+              "displayName": "Delivery Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        144,
+        528
+      ],
+      "id": "a7f0938e-701a-48f6-a79b-ca7caecebaf7",
+      "name": "Add Order",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "uHwgKub1TD5juEK8",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/{{ $('Receive message').first().json.body.entry[0].id }}/messages",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "EAAfUKdFZB5p4BRLI9mdZAI3CyWn2R8ZC5xKhdnhJcnPKgatVSG5K7mZBiR9aS5F1isfmkdw9v4ZAPCSJKZCq0q4cE4IswHautR5SlrEGEZBpHJbLip5KkQeqSimJKJUMNWHtbKPcUUok9L3dSW3dZBFPdWv2At2UYrKWg5GoLlfZCZCH0bJImpNYSn3ZAlRg1IRS3gNuePuvQZDZD"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": {\n    \"id\": \"{{ $('Receive message').first().json.body.entry[0].messaging[0].sender.id }}\"\n  },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"text\": {{ JSON.stringify($json.output) }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        80,
+        272
+      ],
+      "id": "91ecac97-9042-49da-af89-4e2f196d5119",
+      "name": "Reply to Facebook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b7151ecd-6665-440a-8bad-99010256b0bf",
+              "leftValue": "={{ $json.query['hub.mode'] }}",
+              "rightValue": "subscribe",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "51fe842c-55c2-43b2-807d-d6d016acd559",
+              "leftValue": "={{ $json.query.hub_verify_token }}",
+              "rightValue": "4cb56218922c2b93d6b4ef488dbad4135c164a698d345660883e4e6f7d63ab1d",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -480,
+        80
+      ],
+      "id": "efa1aa03-5488-4dc4-8347-02717a94e6b6",
+      "name": "Check token"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e254dbb3-9e3e-4832-82fe-cc15d088080e",
+              "leftValue": "={{ $json.body.entry[0].messaging[0].message.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -480,
+        272
+      ],
+      "id": "3166935d-0405-4fc1-818c-0a726e44acfc",
+      "name": "Check message exists"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -240,
+        80
+      ],
+      "id": "bb7dbf36-6ace-4a4c-9636-08643c7ab47a",
+      "name": "Verify Facebook"
+    },
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "path": "facebook",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -768,
+        176
+      ],
+      "id": "91d96590-5204-4403-a228-9a583f75920d",
+      "name": "Receive message",
+      "webhookId": "eb3f4929-9cb2-4546-83b9-a1fa517887fe"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Reply to Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Products Data": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Order": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check token": {
+      "main": [
+        [
+          {
+            "node": "Verify Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check message exists": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive message": {
+      "main": [
+        [
+          {
+            "node": "Check token",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check message exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "090a97a6-8fc9-474b-8d0c-1886110cd0c1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "30077302e5a5c77c6dcc777b449bb16d7c1f0805aa62802477da5a66336a1a44"
+  },
+  "id": "DV9nWIcCKgCuIzBV",
+  "tags": []
+}
