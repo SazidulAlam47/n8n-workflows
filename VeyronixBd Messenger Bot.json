@@ -1,5 +1,5 @@
 {
-  "name": "facebook messenger bot",
+  "name": "VeyronixBd Messenger Bot",
   "nodes": [
     {
       "parameters": {
@@ -32,26 +32,6 @@
       ],
       "id": "523d7998-d8e9-41b6-8f4b-ca72c29a3322",
       "name": "Simple Memory"
-    },
-    {
-      "parameters": {
-        "modelName": "models/gemini-3.1-flash-lite-preview",
-        "options": {}
-      },
-      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
-      "typeVersion": 1,
-      "position": [
-        -416,
-        528
-      ],
-      "id": "334745b5-c537-457f-8b33-dda07637b56a",
-      "name": "Google Gemini Chat Model",
-      "credentials": {
-        "googlePalmApi": {
-          "id": "i3pOPq4aqwBHDPAJ",
-          "name": "Google Gemini(PaLM) Api account"
-        }
-      }
     },
     {
       "parameters": {
@@ -219,7 +199,7 @@
       "typeVersion": 4.7,
       "position": [
         144,
-        528
+        544
       ],
       "id": "a7f0938e-701a-48f6-a79b-ca7caecebaf7",
       "name": "Add Order",
@@ -364,6 +344,26 @@
       "id": "91d96590-5204-4403-a228-9a583f75920d",
       "name": "Receive message",
       "webhookId": "eb3f4929-9cb2-4546-83b9-a1fa517887fe"
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        544
+      ],
+      "id": "8fefae2f-b442-46af-a72c-5432a275acb5",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "EfCxfq4ZnD4JdbCT",
+          "name": "Groq account"
+        }
+      }
     }
   ],
   "pinData": {},
@@ -385,17 +385,6 @@
           {
             "node": "AI Agent",
             "type": "ai_memory",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Google Gemini Chat Model": {
-      "ai_languageModel": [
-        [
-          {
-            "node": "AI Agent",
-            "type": "ai_languageModel",
             "index": 0
           }
         ]
@@ -462,6 +451,17 @@
           }
         ]
       ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -469,7 +469,7 @@
     "executionOrder": "v1",
     "binaryMode": "separate"
   },
-  "versionId": "090a97a6-8fc9-474b-8d0c-1886110cd0c1",
+  "versionId": "ab7cb4a5-d759-4612-bd42-419b0dd19447",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "30077302e5a5c77c6dcc777b449bb16d7c1f0805aa62802477da5a66336a1a44"

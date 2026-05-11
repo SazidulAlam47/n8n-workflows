@@ -1,0 +1,558 @@
+{
+  "name": "Bistro Boss Messenger Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.entry[0].messaging[0].message.text }}",
+        "options": {
+          "systemMessage": "=# ROLE: Bistro Boss - Human-Like Restaurant Support & Reservation Agent\nYou are the lead Customer Support & Reservation Specialist for \"Bistro Boss,\" a premium food and drinks restaurant in Bangladesh offering dine-in, delivery, and event reservations. Your goal is to provide a seamless, hospitable, and human-like customer experience on Facebook Messenger.\n\n# CONTEXT & BRAND VOICE:\n- Tone: Warm, welcoming, appetizing, and professional. Avoid \"robotic\" or overly formal language.\n- Identity: Never identify as an AI. You are a human staff member at Bistro Boss.\n- Localization: You understand the Bangladeshi market. Use polite terms like \"Bhai/Apu\" or \"Sir/Ma'am\" depending on the customer's vibe.\n- Reply in short messages, just like a human chatting on Messenger.\n- Only talk about our food, drinks, delivery, or reservations.\n\n# STRICT RULE: \n- You must always respond in plain text format only. Never use Markdown (no bolding, no italics, no headers, no bullet point symbols that trigger markdown) and never use JSON in your messages to the customer. The output must be clean, standard text.\n- Greeting Rule: In your initial greetings or when asking how you can help, you MUST mention that we offer both delicious food delivery/dine-in and table reservations for any special events.\n\n# LANGUAGE RULES (STRICT MIRRORING):\n- You must detect and respond in the EXACT language/style the customer uses.\n- English -> Reply in English.\n- Bengali (Unicode/বাংলা) -> Reply in Bengali.\n- Banglish (Bengali in English letters, e.g., \"Menu te ki ache?\") -> Reply in Banglish.\n- If the user mixes languages, respond in the dominant language they used.\n\n# CHAT DYNAMICS & LENGTH:\n- Keep initial responses short and punchy.\n- Make food sound appetizing! Mention a key ingredient or flavor if recommending a dish.\n\n# TOOL USAGE & LOGIC:\nYou have access to four tools: \"Get_Food_Menu\", \"Order_Food\", \"Get_Table_Details\", and \"Reserve_Table\".\n\n1. MENU DISCOVERY:\n   - When a user asks about food/drinks (e.g., \"Do you have pizza?\", \"Show me the menu\"), call the \"Get_Food_Menu\" tool.\n   - Use the tool output to answer. Mention the price clearly.\n   - DATA FILTERING: Strictly ignore the fields \"isOffered\", \"isPopular\", and \"isRecommended\" in the returned menu data. Do not mention them or base your responses on them.\n\n2. FOOD ORDER FLOW (MULTI-ITEM) & STRICT TOOL EXECUTION:\n   - When a user selects an item to order (even if they ordered directly without asking for the menu), you MUST FIRST call the \"Get_Food_Menu\" tool to grab the exact _id and price of the item(s). Do not guess or hallucinate details.\n   - After verifying the item details from the tool, acknowledge the order and ALWAYS ask if they want to add anything else (e.g., \"Would you like any drinks or dessert with that?\").\n   - Keep track of all the items they want.\n   - Once they confirm they do not want to add anything else, collect ONLY the following information: Full Name, Email Address.\n   - Calculate the total price of all selected items using the data grabbed from \"Get_Food_Menu\".\n   - Finally, call the \"Order_Food\" tool to place the order. \n   - CRITICAL TOOL INSTRUCTION: When providing the arguments to the Order_Food tool, you MUST provide them in this EXACT sequential order, and menuItemIds MUST be an array format even if it is just one item:\n      \"price\": (The calculated total price as a number)\n      \"email\": \"(The user's email address)\"\n      \"name\": \"(The user's name)\"\n      \"date\": \"(Current date, e.g., using new Date() format)\"\n      \"menuItemIds\": [\"(Array of strings containing the exact _id values of the ordered items from the Get_Food_Menu tool)\"]\n      \"tnxId\": \"messenger order\"\n      \"status\": \"pending\"\n   - After calling the tool, confirm the successful order with the customer and tell them their total price.\n\n3. TABLE RESERVATION FLOW (SPECIAL EVENTS):\n   - When a user asks to book a table or asks about reservations, you MUST FIRST call the \"Get_Table_Details\" tool to see all available tables.\n   - Present the available tables to the user. You must tell them the Table Number, the number of Seats, and the Location (e.g., indoor, balcony) for the available options.\n   - Ask the user to choose one of the tables from the list.\n   - IN THE SAME MESSAGE, ask the user to provide the rest of the required booking details: Reservation Date/Time, Number of Guests, Duration in minutes, Full Name, and Email Address.\n   - Once the user replies with their chosen table and all the requested details, grab the specific _id of their chosen table from the \"Get_Table_Details\" data.\n   - Call the \"Reserve_Table\" tool with all the collected information.\n   - After calling the tool, confirm the successful table booking with the user.\n\n# OPERATIONAL DATA (DEFAULT):\n- Menu Categories: We EXCLUSIVELY serve Salad, Pizza, Soup, Dessert, and Drinks. \n- Location: Bistro Boss, Dhanmondi, Dhaka.\n- Hours: 11:00 AM to 11:30 PM everyday.\n\n# CONSTRAINTS:\n- Do not hallucinate items, prices, or tables. ALWAYS use the respective tools first before confirming an order or reservation.\n- Ignored Fields: You MUST completely ignore the \"isOffered\", \"isPopular\", and \"isRecommended\" fields from the API data.\n- Strict Menu Limitation: We only sell Salad, Pizza, Soup, Dessert, and Drinks. If asked for anything else (like burgers or biryani), politely explain our categories and offer a recommendation.\n- If a user asks for non-restaurant topics, politely redirect them back to the menu or reservations.\n\n# EXAMPLE DIALOGUE (BANGLISH):\nUser: \"Hi, apnader ekhane ki kora jay?\"\nAI: \"Hello! Bistro Boss e apnake shagotom. Amader ekhane apni darun shob food item (Pizza, Soup, Dessert etc) enjoy korte paren, r kono special event er jonno table o reserve korte paren! Apni ki menu dekhben naki table book korben?\"\nUser: \"Ekta table book korbo.\"\nAI: [Call \"Get_Table_Details\"] -> \"Amader ekhon duto table faka ache. Table T4 (8 seats, indoor) r Table T3 (6 seats, balcony). Apni konta nite chan? Ar sathe apnar Nam, Email, Reservation Date, Koyjon asben, r koto khon er jonno (duration in minutes) thakben ta ektu janaben?\"\n\nCurrent Date & Time: {{ $now }}"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        192
+      ],
+      "id": "db1a3c5b-9ac2-4424-884c-495129e8c219",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.entry[0].messaging[0].sender.id }}",
+        "contextWindowLength": 15
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        208,
+        464
+      ],
+      "id": "3ff1225d-b2c8-4b46-90e6-385e7eae65a1",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/{{ $('Receive message').first().json.body.entry[0].id }}/messages",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "EAA4ofZCCEaEABRW9xVZB3gODNek5x1I4YTbVc75UlKpPoIJqA8TOgoQmmA6UeCtLnafUZBAdi3SEnGJ3drmOFvqm6eIaj6SDGlz9J3NZAOUotZBsXR7wFHZBbMZCIUz03fY0nRY4A4Vx3qnyqDHnPbqwZAUNHOn1HvDjH9m3CVZBHTpTQ6HN2TBH5uiX4BeiT91C58ZAkRtlZAfXgZDZD"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": {\n    \"id\": \"{{ $('Receive message').first().json.body.entry[0].messaging[0].sender.id }}\"\n  },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"text\": {{ JSON.stringify($json.output) }}\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        0
+      ],
+      "id": "1fd823ea-eafb-4c62-83d2-f7b9c0a35cf8",
+      "name": "Reply to Facebook"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "b7151ecd-6665-440a-8bad-99010256b0bf",
+              "leftValue": "={{ $json.query['hub.mode'] }}",
+              "rightValue": "subscribe",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "51fe842c-55c2-43b2-807d-d6d016acd559",
+              "leftValue": "={{ $json.query.hub_verify_token }}",
+              "rightValue": "4cb56218922c2b93d6b4ef488dbad4135c164a698d345660883e4e6f7d63ab1d",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        0
+      ],
+      "id": "803a7102-45cd-4126-a826-b29e1309e24d",
+      "name": "Check token"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "e254dbb3-9e3e-4832-82fe-cc15d088080e",
+              "leftValue": "={{ $json.body.entry[0].messaging[0].message.text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        0,
+        192
+      ],
+      "id": "7d501fe8-df3d-4a89-856d-b2ce3173a759",
+      "name": "Check message exists"
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.query['hub.challenge'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        240,
+        0
+      ],
+      "id": "89c26ead-ed5f-4301-bf9e-4fa0aed04d49",
+      "name": "Verify Facebook"
+    },
+    {
+      "parameters": {
+        "multipleMethods": true,
+        "path": "facebook-bistro",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -288,
+        96
+      ],
+      "id": "bbb794a5-fb5a-4c0a-a5c1-4d57ec919499",
+      "name": "Receive message",
+      "webhookId": "eb3f4929-9cb2-4546-83b9-a1fa517887fe"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool whenever the customer asks about the menu, asks for the price of a specific dish, wants recommendations, OR whenever the customer states they want to order an item. You MUST call this tool to fetch the exact _id and price of the item(s) before proceeding with the order flow. The restaurant strictly only serves Salad, Pizza, Soup, Dessert, and Drinks. This tool fetches the live, updated menu data from the Bistro Boss database. Always use this to verify item availability, names, prices, and IDs before confirming them to the user. Do not guess or hallucinate menu items.",
+        "url": "https://bistro-boss-restaurant-server-delta-teal.vercel.app/menus",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "category",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        400,
+        464
+      ],
+      "id": "b3754435-43b5-470e-bdb2-25b8c31a84b9",
+      "name": "Get_Food_Menu"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool ONLY when the user has finalized their food choices (declined adding more items) and has provided their Full Name and Email Address. Calculate the total price of the items selected before calling this tool.",
+        "method": "POST",
+        "url": "https://bistro-boss-restaurant-server-delta-teal.vercel.app/payments/create-by-bot",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-bot-api-key",
+              "value": "AIzaSyC9n8sXo2l7m1u5v6w7x8y9z0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2g"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tnxId",
+              "value": "messenger order"
+            },
+            {
+              "name": "price",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "email",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', ``, 'string') }}"
+            },
+            {
+              "name": "name",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters3_Value', ``, 'string') }}"
+            },
+            {
+              "name": "date",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters4_Value', ``, 'string') }}"
+            },
+            {
+              "name": "menuItemIds",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters5_Value', ``, 'string') }}"
+            },
+            {
+              "name": "status",
+              "value": "pending"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        592,
+        464
+      ],
+      "id": "ad718187-07be-4981-a7fe-5f3a74b8895d",
+      "name": "Order_Food"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/{{ $('Receive message').first().json.body.entry[0].id }}/messages",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "access_token",
+              "value": "EAA4ofZCCEaEABRW9xVZB3gODNek5x1I4YTbVc75UlKpPoIJqA8TOgoQmmA6UeCtLnafUZBAdi3SEnGJ3drmOFvqm6eIaj6SDGlz9J3NZAOUotZBsXR7wFHZBbMZCIUz03fY0nRY4A4Vx3qnyqDHnPbqwZAUNHOn1HvDjH9m3CVZBHTpTQ6HN2TBH5uiX4BeiT91C58ZAkRtlZAfXgZDZD"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"recipient\": {\n    \"id\": \"{{ $('Receive message').first().json.body.entry[0].messaging[0].sender.id }}\"\n  },\n  \"messaging_type\": \"RESPONSE\",\n  \"message\": {\n    \"text\": \"Something went wrong\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        832,
+        192
+      ],
+      "id": "5cd8e3c0-bf5b-4dad-a94d-c7928c099a21",
+      "name": "Reply to Facebook (Error)"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool whenever the customer asks to book a table, make a reservation for an event, or asks about table availability. This tool fetches the live data of available tables from the database. It returns an array of tables including their _id, tableNumber, seats, and location. Use this information to present the table options to the user so they can choose one. Do not guess or hallucinate table numbers or seat counts.",
+        "url": "https://bistro-boss-restaurant-server-delta-teal.vercel.app/tables",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": []
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        816,
+        464
+      ],
+      "id": "173d3e2a-73f0-4d49-a7ae-a9d42c15c35b",
+      "name": "Get_Table_Details"
+    },
+    {
+      "parameters": {
+        "toolDescription": "Call this tool ONLY after you have presented the table options from Get_Table_Details, the user has selected a specific table, and the user has provided their Name, Email, Reservation Date, Number of Guests, and Duration in minutes.",
+        "method": "POST",
+        "url": "https://bistro-boss-restaurant-server-delta-teal.vercel.app/reservations/create-by-bot",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-bot-api-key",
+              "value": "AIzaSyC9n8sXo2l7m1u5v6w7x8y9z0a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6q7r8s9t0u1v2w3x4y5z6a7b8c9d0e1f2g"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "tableId",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters0_Value', ``, 'string') }}"
+            },
+            {
+              "name": "reservationDate",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters1_Value', ``, 'string') }}"
+            },
+            {
+              "name": "numberOfGuests",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters2_Value', ``, 'string') }}"
+            },
+            {
+              "name": "durationMinutes",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters3_Value', ``, 'string') }}"
+            },
+            {
+              "name": "customerName",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters4_Value', ``, 'string') }}"
+            },
+            {
+              "name": "customerEmail",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('parameters5_Value', ``, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequestTool",
+      "typeVersion": 4.4,
+      "position": [
+        1024,
+        464
+      ],
+      "id": "1ce4dc09-be02-491e-968f-105f51e72056",
+      "name": "Reserve_Table"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "894a446a-9433-47e9-8457-ae813b148501",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        624,
+        112
+      ],
+      "id": "ac4eb1e8-5951-4d9f-bbb4-50701ce1c899",
+      "name": "If reply exists"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite-preview",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        32,
+        464
+      ],
+      "id": "44958e1c-e7a8-4705-9a3b-ed3258464ca2",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "i3pOPq4aqwBHDPAJ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If reply exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check token": {
+      "main": [
+        [
+          {
+            "node": "Verify Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check message exists": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Receive message": {
+      "main": [
+        [
+          {
+            "node": "Check token",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Check message exists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_Food_Menu": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Order_Food": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get_Table_Details": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reserve_Table": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If reply exists": {
+      "main": [
+        [
+          {
+            "node": "Reply to Facebook",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Reply to Facebook (Error)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "407bc129-37ce-458f-91bb-17c87739ed05",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "30077302e5a5c77c6dcc777b449bb16d7c1f0805aa62802477da5a66336a1a44"
+  },
+  "id": "ewYJCL7MOV9DxSIi",
+  "tags": []
+}
